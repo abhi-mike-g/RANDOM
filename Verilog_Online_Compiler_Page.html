@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Verilog Compiler Playground</title>
+  <style>
+    /* Reset and base */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+        Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #ffffff;
+      color: #6b7280;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Sticky header */
+    header {
+      position: sticky;
+      top: 0;
+      background-color: #ffffff;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    .container {
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1rem;
+      padding-right: 1rem;
+      width: 100%;
+    }
+
+    /* Navigation bar */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+    }
+    .logo {
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: #374151;
+      user-select: none;
+    }
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #6b7280;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+    .nav-links a:hover,
+    .nav-links a:focus {
+      color: #111827;
+    }
+
+    /* Hero section */
+    .hero {
+      padding: 5rem 1rem 5rem 1rem;
+      text-align: center;
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 1rem;
+      line-height: 1.1;
+    }
+    .hero p {
+      font-size: 1.25rem;
+      color: #4b5563;
+      margin-bottom: 2rem;
+      user-select: none;
+    }
+    .btn-cta {
+      background-color: #111827;
+      color: white;
+      font-weight: 700;
+      font-size: 1.125rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    .btn-cta:hover,
+    .btn-cta:focus {
+      background-color: #374151;
+      outline: none;
+    }
+
+    /* Main content with code editor and output */
+    main {
+      flex-grow: 1;
+      max-width: 1200px;
+      margin: 0 auto 4rem auto;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Card common styles */
+    .card {
+      background-color: #f9fafb;
+      border-radius: 0.75rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      height: 600px;
+    }
+    .card h2 {
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: #111827;
+      margin-bottom: 1rem;
+      user-select: none;
+    }
+
+    /* Code Editor Styles */
+    textarea#codeInput {
+      flex-grow: 1;
+      width: 100%;
+      border-radius: 0.5rem;
+      border: 1px solid #d1d5db;
+      padding: 1rem;
+      font-family: 'Fira Mono', monospace, monospace;
+      font-size: 1rem;
+      resize: none;
+      background-color: white;
+      color: #111827;
+      box-shadow: inset 0 0 6px #e0e0e0;
+      outline-offset: 2px;
+      outline-color: transparent;
+      transition: outline-color 0.3s ease;
+    }
+    textarea#codeInput:focus {
+      outline-color: #2563eb;
+      border-color: #2563eb;
+    }
+
+    /* Compile button below code editor */
+    #compileBtn {
+      margin-top: 1rem;
+      padding: 0.75rem 1.25rem;
+      background-color: #111827;
+      color: white;
+      font-weight: 700;
+      font-size: 1.125rem;
+      border: none;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      align-self: flex-start;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    #compileBtn:disabled {
+      background-color: #9ca3af;
+      cursor: not-allowed;
+    }
+    #compileBtn:hover:not(:disabled),
+    #compileBtn:focus:not(:disabled) {
+      background-color: #374151;
+      outline: none;
+    }
+
+    /* Output panel */
+    #outputPanel {
+      flex-grow: 1;
+      overflow-y: auto;
+      font-family: 'Fira Mono', monospace, monospace;
+      font-size: 0.9rem;
+      color: #111827;
+      background-color: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      white-space: pre-wrap;
+      box-shadow: inset 0 0 6px #e0e0e0;
+    }
+
+    /* Error highlighting */
+    .error {
+      color: #b91c1c;
+      font-weight: 700;
+      user-select: none;
+    }
+
+    /* Info text in output */
+    .info {
+      color: #2563eb;
+      user-select: none;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      font-size: 0.875rem;
+      padding-bottom: 2rem;
+      color: #9ca3af;
+      user-select: none;
+    }
+
+  </style>
+</head>
+<body>
+
+<header role="banner">
+  <div class="container">
+    <nav role="navigation" aria-label="Primary Navigation">
+      <div class="logo" tabindex="0" aria-label="Verilog Compiler Logo">Verilog Compiler</div>
+      <div class="nav-links" role="menu">
+        <a href="#hero" role="menuitem" tabindex="0">Home</a>
+        <a href="#compiler" role="menuitem" tabindex="0">Compiler</a>
+        <a href="#docs" role="menuitem" tabindex="0" target="_blank" rel="noopener noreferrer" href="https://ieeexplore.ieee.org/document/676066" title="IEEE Verilog Standard">Docs</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<section id="hero" class="hero" role="region" aria-labelledby="hero-title">
+  <h1 id="hero-title">Compile and Analyze Verilog Code Instantly</h1>
+  <p>Paste your Verilog code below and see a parsed abstract syntax tree or find syntax errors. Explore a minimal Verilog compiler frontend demonstration designed for developers.</p>
+  <button class="btn-cta" aria-controls="codeInput" role="button" id="focusEditorBtn">Try it Now</button>
+</section>
+
+<main id="compiler" class="container" role="main" aria-label="Verilog Compiler Interface">
+  <section class="card" aria-label="Verilog Code Editor">
+    <h2>Verilog Code Editor</h2>
+    <textarea id="codeInput" aria-describedby="code-hint" spellcheck="false" aria-multiline="true" autocomplete="off" autocorrect="off" autocapitalize="off" name="verilogInput" aria-label="Verilog code editor" placeholder="// Write your Verilog module here
+module example(input logic clk, input logic rst, output logic done);
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst)
+      done <= 0;
+    else
+      done <= 1;
+  end
+endmodule"></textarea>
+    <small id="code-hint" style="color:#9ca3af; user-select:none; margin-top:0.25rem; display:block;">Supports a minimal subset of Verilog syntax for demonstration.</small>
+    <button id="compileBtn" aria-label="Compile Verilog Code">Compile</button>
+  </section>
+
+  <section class="card" aria-live="polite" aria-atomic="true" aria-label="Compile Output Panel">
+    <h2>Compilation Output</h2>
+    <pre id="outputPanel" tabindex="0" aria-live="polite" aria-atomic="true" aria-relevant="additions"></pre>
+  </section>
+</main>
+
+<footer>
+  &copy; 2024 Verilog Compiler Demo — Open source and educational
+</footer>
+
+<script>
+  // Minimal Verilog lexer and parser (subset) - demo purpose only
+
+  // Tokenizer patterns
+  const tokenPatterns = [
+    { type: 'whitespace', regex: /^\s+/ },
+    { type: 'comment', regex: /^\/\/.*/ }, // single line comment
+    { type: 'keyword', regex: /^(module|endmodule|input|output|wire|reg|assign|always_ff|posedge|negedge|if|else|begin|end|logic|parameter|localparam|integer|for|while)\b/i },
+    { type: 'identifier', regex: /^[a-zA-Z_]\w*/ },
+    { type: 'number', regex: /^\d+'[bodh][0-9a-fA-F_xz]+/i }, // e.g. 4'b1010
+    { type: 'number', regex: /^\d+/ },
+    { type: 'operator', regex: /^(<=|>=|==|!=|&&|\|\||[=<>+\-*\/%&|^~!:;,(){}\[\]])/ },
+    { type: 'unknown', regex: /^./ }, // catch all for unknown chars
+  ];
+
+  class Token {
+    constructor(type, value, pos) {
+      this.type = type;
+      this.value = value;
+      this.pos = pos;
+    }
+  }
+
+  function tokenize(input) {
+    let tokens = [];
+    let pos = 0;
+    while (pos < input.length) {
+      let matched = false;
+      for (let {type, regex} of tokenPatterns) {
+        let match = input.slice(pos).match(regex);
+        if (match) {
+          if (type !== 'whitespace' && type !== 'comment') {
+            tokens.push(new Token(type, match[0], pos));
+          }
+          pos += match[0].length;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        throw new Error('Lexer error at position ' + pos);
+      }
+    }
+    return tokens;
+  }
+
+  // Simple parser for minimal Verilog subset:
+  // Parses a module definition with ports declarations and always_ff blocks.
+
+  class Parser {
+    constructor(tokens) {
+      this.tokens = tokens;
+      this.pos = 0;
+    }
+    peek(offset=0) {
+      return this.tokens[this.pos + offset] || null;
+    }
+    consume(type, value) {
+      const token = this.peek();
+      if (!token || token.type !== type || (value && token.value.toLowerCase() !== value.toLowerCase())) {
+        this.error(`Expected token ${value || type} but found ${(token ? `${token.type} (${token.value})` : 'EOF')}`);
+      }
+      this.pos++;
+      return token;
+    }
+    error(msg) {
+      throw new Error(`Parse error at token ${this.pos}: ${msg}`);
+    }
+
+    parseModule() {
+      let moduleNode = {
+        type: 'module',
+        name: '',
+        ports: [],
+        body: []
+      };
+      this.consume('keyword', 'module');
+      let nameToken = this.consume('identifier');
+      moduleNode.name = nameToken.value;
+      this.consume('operator', '(');
+      moduleNode.ports = this.parsePortList();
+      this.consume('operator', ')');
+      this.consume('operator', ';');
+      while(this.peek() && !(this.peek().type === 'keyword' && this.peek().value.toLowerCase() === 'endmodule')) {
+        let stmt = this.parseStatement();
+        if (stmt) moduleNode.body.push(stmt);
+      }
+      this.consume('keyword', 'endmodule');
+      return moduleNode;
+    }
+
+    parsePortList() {
+      let ports = [];
+      while(true) {
+        // expect: input/output + optional type + identifier + optional comma or closing paren
+        if (!this.peek()) this.error('Unexpected end while parsing ports');
+        let dirToken = this.peek();
+        if (dirToken.type !== 'keyword' || !['input','output'].includes(dirToken.value.toLowerCase())) {
+          // no more ports
+          break;
+        }
+        this.consume('keyword'); // direction
+        let type = null;
+        if (this.peek() && this.peek().type === 'keyword' && ['logic','wire','reg'].includes(this.peek().value.toLowerCase())) {
+          type = this.consume('keyword').value.toLowerCase();
+        }
+        let idToken = this.consume('identifier');
+        ports.push({direction: dirToken.value.toLowerCase(), type, name: idToken.value});
+        if (this.peek() && this.peek().type === 'operator' && this.peek().value === ',') {
+          this.consume('operator', ',');
+        } else {
+          break;
+        }
+      }
+      return ports;
+    }
+
+    parseStatement() {
+      const token = this.peek();
+      if (!token) return null;
+      if (token.type === 'keyword' && token.value.toLowerCase() === 'always_ff') {
+        return this.parseAlwaysBlock();
+      }
+      // Other statement types can be added here
+      // For demo, consume something unknown and skip it
+      this.pos++;
+      return null;
+    }
+
+    parseAlwaysBlock() {
+      this.consume('keyword', 'always_ff');
+      this.consume('operator', '@');
+      this.consume('operator', '(');
+      const sensitivityList = [];
+      while(this.peek() && this.peek().value !== ')') {
+        if (this.peek().type === 'keyword' && ['posedge','negedge'].includes(this.peek().value.toLowerCase())) {
+          sensitivityList.push(this.consume('keyword').value);
+        } else if (this.peek().type === 'identifier') {
+          sensitivityList.push(this.consume('identifier').value);
+        } else if (this.peek().type === 'operator' && this.peek().value === 'or') {
+          this.consume('operator', 'or');
+        } else {
+          // Skip unknown token for robustness
+          this.pos++;
+        }
+      }
+      this.consume('operator', ')');
+
+      let body = this.parseBlockOrStatement();
+      return {
+        type: 'always_ff',
+        sensitivity: sensitivityList,
+        body: body
+      };
+    }
+
+    parseBlockOrStatement() {
+      // Parses begin...end block or single statement (limited)
+      if (this.peek() && this.peek().type === 'keyword' && this.peek().value.toLowerCase() === 'begin') {
+        this.consume('keyword', 'begin');
+        let stmts = [];
+        while(this.peek() && !(this.peek().type === 'keyword' && this.peek().value.toLowerCase() === 'end')) {
+          // For demo, just consume and store tokens as strings
+          const stmtTokens = [];
+          while(this.peek() && !(this.peek().type === 'operator' && this.peek().value === ';')) {
+            stmtTokens.push(this.consume(this.peek().type, this.peek().value).value);
+          }
+          this.consume('operator', ';');
+          stmts.push(stmtTokens.join(' '));
+        }
+        this.consume('keyword', 'end');
+        return stmts;
+      } else {
+        // single statement till ;
+        const stmtTokens = [];
+        while(this.peek() && !(this.peek().type === 'operator' && this.peek().value === ';')) {
+          stmtTokens.push(this.consume(this.peek().type, this.peek().value).value);
+        }
+        this.consume('operator', ';');
+        return stmtTokens.join(' ');
+      }
+    }
+  }
+
+  // DOM references
+  const codeInput = document.getElementById('codeInput');
+  const compileBtn = document.getElementById('compileBtn');
+  const outputPanel = document.getElementById('outputPanel');
+  const focusEditorBtn = document.getElementById('focusEditorBtn');
+
+  focusEditorBtn.addEventListener('click', () => {
+    codeInput.focus();
+  });
+
+  compileBtn.addEventListener('click', () => {
+    const code = codeInput.value.trim();
+    if (!code) {
+      outputPanel.textContent = 'Please enter Verilog code to compile.';
+      outputPanel.className = 'info';
+      return;
+    }
+    try {
+      const tokens = tokenize(code);
+      const parser = new Parser(tokens);
+      const ast = parser.parseModule();
+      outputPanel.textContent = JSON.stringify(ast, null, 2);
+      outputPanel.className = '';
+    } catch (err) {
+      outputPanel.textContent = 'Error: ' + err.message;
+      outputPanel.className = 'error';
+    }
+  });
+
+</script>
+
+</body>
+</html>
+
